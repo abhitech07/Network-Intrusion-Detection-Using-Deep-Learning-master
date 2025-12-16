@@ -1,0 +1,174 @@
+<%- include('partials/header') %>
+
+<div class="container-fluid" style="padding: 30px;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="display-4"><i class="fas fa-shield-alt text-primary"></i> Threat Intelligence Dashboard</h1>
+            <p class="text-muted">Real-time analysis results from Hybrid Ensemble Architecture</p>
+        </div>
+        <a href="/csv" class="btn btn-outline-primary btn-lg"><i class="fas fa-upload"></i> Analyze New File</a>
+    </div>
+    <hr>
+
+    <% if(data) { %>
+    
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary mb-3 shadow h-100">
+                <div class="card-header font-weight-bold">TOTAL PACKETS</div>
+                <div class="card-body">
+                    <h2 class="card-title display-4"><%= data.total %></h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success mb-3 shadow h-100">
+                <div class="card-header font-weight-bold">NORMAL TRAFFIC</div>
+                <div class="card-body">
+                    <h2 class="card-title display-4"><%= data.stats['Normal'] || 0 %></h2>
+                    <p class="card-text">Safe connections</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-danger mb-3 shadow h-100">
+                <div class="card-header font-weight-bold">THREATS DETECTED</div>
+                <div class="card-body">
+                    <% let attacks = (data.stats['Dos']||0) + (data.stats['Probe']||0) + (data.stats['U2R']||0) + (data.stats['R2L']||0); %>
+                    <h2 class="card-title display-4"><%= attacks %></h2>
+                    <p class="card-text">Requires immediate attention</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-dark bg-light mb-3 shadow h-100 border-primary">
+                <div class="card-header font-weight-bold text-primary">MODEL USED</div>
+                <div class="card-body">
+                    <h3 class="card-title text-primary">Hybrid Ensemble</h3>
+                    <p class="card-text">CNN + LSTM + Random Forest</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6 col-md-12">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-chart-pie"></i> Traffic Classification</span>
+                    <span class="badge badge-light">Live Data</span>
+                </div>
+                <div class="card-body">
+                    <canvas id="attackChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 col-md-12">
+            <div class="card shadow mb-4" style="height: 100%;">
+                <div class="card-header bg-danger text-white">
+                    <i class="fas fa-exclamation-triangle"></i> Detailed Threat Log
+                </div>
+                <div class="card-body" style="overflow-y: auto; max-height: 340px;">
+                    <ul class="list-group">
+                        <% let hasAttacks = false; %>
+                        <% for (const [type, count] of Object.entries(data.stats)) { %>
+                            <% if(type !== 'Normal' && count > 0) { hasAttacks = true; %>
+                            <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-danger mb-2 shadow-sm">
+                                <div>
+                                    <i class="fas fa-bug"></i> <strong><%= type %></strong> Attack
+                                    <br><small class="text-muted">Severity: High</small>
+                                </div>
+                                <span class="badge badge-dark badge-pill" style="font-size: 1.2em;"><%= count %></span>
+                            </li>
+                            <% } %>
+                        <% } %>
+                        
+                        <% if(!hasAttacks) { %>
+                            <li class="list-group-item list-group-item-success text-center p-4">
+                                <i class="fas fa-check-circle fa-3x mb-3"></i><br>
+                                <h3>No Threats Detected</h3>
+                                <p>Network traffic appears normal.</p>
+                            </li>
+                        <% } else { %>
+                            <li class="list-group-item list-group-item-success mt-3">
+                                ✅ Normal Traffic Count: <strong><%= data.stats['Normal'] || 0 %></strong>
+                            </li>
+                        <% } %>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow border-info">
+                <div class="card-header bg-info text-white">
+                    <i class="fas fa-brain"></i> Explainable AI (SHAP) Analysis
+                </div>
+                <div class="card-body text-center">
+                    <h5 class="card-title">Model Decision Transparency</h5>
+                    <p class="text-muted">The visualization below explains <strong>why</strong> the specific traffic was flagged as an attack. Features pushing the prediction to the right (Red) are attack indicators.</p>
+                    
+                    <% if(data.shap_path) { %>
+                        <div style="overflow-x: auto; border: 1px solid #ddd; padding: 10px; border-radius: 5px;">
+                            <iframe src="/<%= data.shap_path %>" style="width: 100%; min-width: 800px; height: 300px; border: none;"></iframe>
+                        </div>
+                    <% } else { %>
+                        <div class="alert alert-secondary">
+                            No attacks detected, so no SHAP explanation is required.
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const ctx = document.getElementById('attackChart').getContext('2d');
+        const stats = <%- JSON.stringify(data.stats) %>;
+        
+        const labels = Object.keys(stats);
+        const dataPoints = Object.values(stats);
+        
+        // Colors: Green for Normal, Red/Orange/Yellow for attacks
+        const colors = labels.map(l => {
+            if(l === 'Normal') return '#28a745'; // Green
+            if(l === 'Dos') return '#dc3545';    // Red
+            if(l === 'Probe') return '#ffc107';  // Yellow
+            return '#fd7e14';                    // Orange (others)
+        });
+
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: dataPoints,
+                    backgroundColor: colors,
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    </script>
+
+    <% } else { %>
+        <div class="alert alert-warning text-center p-5">
+            <h3><i class="fas fa-exclamation-circle"></i> No Data Found</h3>
+            <p>Please upload a CSV file to generate the analysis dashboard.</p>
+            <a href="/csv" class="btn btn-primary">Go to Upload</a>
+        </div>
+    <% } %>
+</div>
+
+<%- include('partials/footer') %>

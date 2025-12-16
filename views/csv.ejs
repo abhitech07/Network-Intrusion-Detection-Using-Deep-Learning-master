@@ -1,0 +1,51 @@
+<%- include('partials/header') %>
+
+<div class="jumbotron text-center">
+  <div class="container">
+    <i class="fas fa-network-wired fa-6x" style="color:#007bff;"></i>
+    <h1 class="display-4">Network Intrusion Detection</h1>
+    <p class="lead">Upload your network traffic dataset (CSV) for real-time analysis.</p>
+    <hr class="my-4">
+    
+    <div class="card shadow-lg p-3 mb-5 bg-white rounded" style="max-width: 600px; margin: 0 auto;">
+      <div class="card-body">
+        <form action="/uploadjavatpoint" method="POST" enctype="multipart/form-data">
+          
+          <div class="form-group text-left">
+            <label for="modelSelect"><strong>Select Analysis Model:</strong></label>
+            <select class="form-control" id="modelSelect" name="selected_model">
+              <option value="hybrid" selected>🏆 Hybrid Ensemble (CNN + LSTM + RF) [Recommended]</option>
+              <option value="cnn">Convolutional Neural Network (CNN)</option>
+              <option value="lstm">Long Short-Term Memory (LSTM)</option>
+              <option value="rf">Random Forest Classifier</option>
+            </select>
+            <small class="form-text text-muted">The Hybrid model uses voting logic for highest accuracy.</small>
+          </div>
+
+          <div class="form-group mt-4 text-left">
+            <label for="fileInput"><strong>Upload CSV File:</strong></label>
+            <div class="custom-file">
+              <input type="file" class="custom-file-input" id="fileInput" name="myfile" accept=".csv" required>
+              <label class="custom-file-label" for="fileInput">Choose file...</label>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block btn-lg mt-4">
+            <i class="fas fa-search"></i> Analyze Traffic
+          </button>
+        
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.querySelector('.custom-file-input').addEventListener('change', function(e){
+  var fileName = document.getElementById("fileInput").files[0].name;
+  var nextSibling = e.target.nextElementSibling;
+  nextSibling.innerText = fileName;
+});
+</script>
+
+<%- include('partials/footer') %>
