@@ -3,8 +3,8 @@
 <div class="container-fluid" style="padding: 30px;">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h1 class="display-4"><i class="fas fa-shield-alt text-primary"></i> Threat Intelligence Dashboard</h1>
-            <p class="text-muted">Real-time analysis results from Hybrid Ensemble Architecture</p>
+            <h1 class="display-4"><i class="fas fa-project-diagram text-primary"></i> Intelligent NIDS Dashboard</h1>
+            <p class="text-muted">Hybrid Ensemble Architecture with Explainable AI (Phase 2)</p>
         </div>
         <a href="/csv" class="btn btn-outline-primary btn-lg"><i class="fas fa-upload"></i> Analyze New File</a>
     </div>
@@ -36,66 +36,70 @@
                 <div class="card-body">
                     <% let attacks = (data.stats['Dos']||0) + (data.stats['Probe']||0) + (data.stats['U2R']||0) + (data.stats['R2L']||0); %>
                     <h2 class="card-title display-4"><%= attacks %></h2>
-                    <p class="card-text">Requires immediate attention</p>
+                    <p class="card-text">Requires Attention</p>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card text-dark bg-light mb-3 shadow h-100 border-primary">
-                <div class="card-header font-weight-bold text-primary">MODEL USED</div>
+                <div class="card-header font-weight-bold text-primary">MODEL INFO</div>
                 <div class="card-body">
-                    <h3 class="card-title text-primary">Hybrid Ensemble</h3>
-                    <p class="card-text">CNN + LSTM + Random Forest</p>
+                    <h5 class="card-title text-primary">Hybrid Ensemble</h5>
+                    <p class="card-text small">
+                        <strong>Components:</strong> CNN + LSTM + RF<br>
+                        <strong>Method:</strong> Majority Voting<br>
+                        <strong>Status:</strong> Optimized
+                    </p>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="row">
-        <div class="col-lg-6 col-md-12">
-            <div class="card shadow mb-4">
-                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                    <span><i class="fas fa-chart-pie"></i> Traffic Classification</span>
-                    <span class="badge badge-light">Live Data</span>
+        <div class="col-lg-6 col-md-12 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header bg-dark text-white">
+                    <span><i class="fas fa-chart-pie"></i> Real-time Traffic Classification</span>
                 </div>
                 <div class="card-body">
-                    <canvas id="attackChart" height="200"></canvas>
+                    <canvas id="attackChart" height="250"></canvas>
                 </div>
             </div>
         </div>
 
-        <div class="col-lg-6 col-md-12">
-            <div class="card shadow mb-4" style="height: 100%;">
-                <div class="card-header bg-danger text-white">
-                    <i class="fas fa-exclamation-triangle"></i> Detailed Threat Log
+        <div class="col-lg-6 col-md-12 mb-4">
+            <div class="card shadow h-100 border-info">
+                <div class="card-header bg-info text-white">
+                    <i class="fas fa-table"></i> Model Performance Benchmarking
                 </div>
-                <div class="card-body" style="overflow-y: auto; max-height: 340px;">
-                    <ul class="list-group">
-                        <% let hasAttacks = false; %>
-                        <% for (const [type, count] of Object.entries(data.stats)) { %>
-                            <% if(type !== 'Normal' && count > 0) { hasAttacks = true; %>
-                            <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-danger mb-2 shadow-sm">
-                                <div>
-                                    <i class="fas fa-bug"></i> <strong><%= type %></strong> Attack
-                                    <br><small class="text-muted">Severity: High</small>
-                                </div>
-                                <span class="badge badge-dark badge-pill" style="font-size: 1.2em;"><%= count %></span>
-                            </li>
+                <div class="card-body">
+                    <p class="text-muted small">Comparison of Hybrid Model vs. Standalone Models on this dataset.</p>
+                    <table class="table table-striped table-hover table-sm">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>Model Architecture</th>
+                                <th>Accuracy</th>
+                                <th>Precision</th>
+                                <th>Recall</th>
+                                <th>F1-Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if(data.comparison && data.comparison.length > 0) { %>
+                                <% data.comparison.forEach(function(row) { %>
+                                <tr class="<%= row.model.includes('Hybrid') ? 'table-warning font-weight-bold' : '' %>">
+                                    <td><%= row.model %></td>
+                                    <td><%= row.acc %></td>
+                                    <td><%= row.prec %></td>
+                                    <td><%= row.rec %></td>
+                                    <td><%= row.f1 %></td>
+                                </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr><td colspan="5" class="text-center">No benchmark data available.</td></tr>
                             <% } %>
-                        <% } %>
-                        
-                        <% if(!hasAttacks) { %>
-                            <li class="list-group-item list-group-item-success text-center p-4">
-                                <i class="fas fa-check-circle fa-3x mb-3"></i><br>
-                                <h3>No Threats Detected</h3>
-                                <p>Network traffic appears normal.</p>
-                            </li>
-                        <% } else { %>
-                            <li class="list-group-item list-group-item-success mt-3">
-                                ✅ Normal Traffic Count: <strong><%= data.stats['Normal'] || 0 %></strong>
-                            </li>
-                        <% } %>
-                    </ul>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -103,23 +107,43 @@
 
     <div class="row mt-4">
         <div class="col-12">
-            <div class="card shadow border-info">
-                <div class="card-header bg-info text-white">
-                    <i class="fas fa-brain"></i> Explainable AI (SHAP) Analysis
+            <div class="card shadow border-secondary">
+                <div class="card-header bg-secondary text-white">
+                    <h4><i class="fas fa-brain"></i> Interpretability Framework for Transparent NIDS</h4>
                 </div>
-                <div class="card-body text-center">
-                    <h5 class="card-title">Model Decision Transparency</h5>
-                    <p class="text-muted">The visualization below explains <strong>why</strong> the specific traffic was flagged as an attack. Features pushing the prediction to the right (Red) are attack indicators.</p>
-                    
-                    <% if(data.shap_path) { %>
-                        <div style="overflow-x: auto; border: 1px solid #ddd; padding: 10px; border-radius: 5px;">
-                            <iframe src="/<%= data.shap_path %>" style="width: 100%; min-width: 800px; height: 300px; border: none;"></iframe>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-6 mb-3">
+                            <div class="card border-0">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title text-primary">Global Interpretability (SHAP)</h5>
+                                    <p class="card-text text-muted small">Feature Importance: Which network features contributed most to detecting attacks?</p>
+                                    <% if(data.shap_path) { %>
+                                        <img src="/<%= data.shap_path %>" class="img-fluid border rounded shadow-sm" alt="SHAP Summary Plot">
+                                    <% } else { %>
+                                        <div class="alert alert-light border">SHAP visualization not generated for this sample.</div>
+                                    <% } %>
+                                </div>
+                            </div>
                         </div>
-                    <% } else { %>
-                        <div class="alert alert-secondary">
-                            No attacks detected, so no SHAP explanation is required.
+
+                        <div class="col-lg-6 mb-3">
+                            <div class="card border-0">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title text-success">Local Attention (Saliency Map)</h5>
+                                    <p class="card-text text-muted small">Deep Learning Focus: Which features did the CNN "look at" for the first packet?</p>
+                                    <% if(data.attention_path) { %>
+                                        <img src="/<%= data.attention_path %>" class="img-fluid border rounded shadow-sm" alt="Attention Map">
+                                    <% } else { %>
+                                        <div class="alert alert-light border">Attention map not generated for this sample.</div>
+                                    <% } %>
+                                </div>
+                            </div>
                         </div>
-                    <% } %>
+                    </div>
+                    <div class="alert alert-info mt-3 small">
+                        <strong>Academic Note:</strong> This framework satisfies the "Black Box" transparency requirement by visualizing model decision boundaries using both Tree Explainer (SHAP) and Gradient Saliency (Attention).
+                    </div>
                 </div>
             </div>
         </div>
@@ -129,16 +153,13 @@
     <script>
         const ctx = document.getElementById('attackChart').getContext('2d');
         const stats = <%- JSON.stringify(data.stats) %>;
-        
         const labels = Object.keys(stats);
         const dataPoints = Object.values(stats);
-        
-        // Colors: Green for Normal, Red/Orange/Yellow for attacks
         const colors = labels.map(l => {
-            if(l === 'Normal') return '#28a745'; // Green
-            if(l === 'Dos') return '#dc3545';    // Red
-            if(l === 'Probe') return '#ffc107';  // Yellow
-            return '#fd7e14';                    // Orange (others)
+            if(l === 'Normal') return '#28a745'; 
+            if(l === 'Dos') return '#dc3545';    
+            if(l === 'Probe') return '#ffc107'; 
+            return '#fd7e14';         
         });
 
         new Chart(ctx, {
@@ -155,9 +176,7 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'bottom' }
-                }
+                plugins: { legend: { position: 'right' } }
             }
         });
     </script>
@@ -170,5 +189,4 @@
         </div>
     <% } %>
 </div>
-
 <%- include('partials/footer') %>
